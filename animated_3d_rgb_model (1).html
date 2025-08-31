@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated 3D Model with RGB Controls</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e1e2e, #2d2d44);
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+            min-width: 250px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            border-radius: 3px;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #4CAF50;
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .value-display {
+            min-width: 35px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .red-slider::-webkit-slider-thumb { background: #ff4444; }
+        .green-slider::-webkit-slider-thumb { background: #44ff44; }
+        .blue-slider::-webkit-slider-thumb { background: #4444ff; }
+        
+        .red-slider::-moz-range-thumb { background: #ff4444; }
+        .green-slider::-moz-range-thumb { background: #44ff44; }
+        .blue-slider::-moz-range-thumb { background: #4444ff; }
+
+        h3 {
+            margin: 0 0 15px 0;
+            color: #fff;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            max-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls">
+            <h3>RGB Color Controls</h3>
+            
+            <div class="control-group">
+                <label for="red">Red (R)</label>
+                <div class="slider-container">
+                    <input type="range" id="red" class="red-slider" min="0" max="255" value="100">
+                    <span class="value-display" id="red-value">100</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="green">Green (G)</label>
+                <div class="slider-container">
+                    <input type="range" id="green" class="green-slider" min="0" max="255" value="150">
+                    <span class="value-display" id="green-value">150</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="blue">Blue (B)</label>
+                <div class="slider-container">
+                    <input type="range" id="blue" class="blue-slider" min="0" max="255" value="255">
+                    <span class="value-display" id="blue-value">255</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="info">
+            <strong>Controls:</strong><br>
+            • Drag sliders to change RGB values<br>
+            • Model rotates and moves in wave pattern<br>
+            • Right to left motion with vertical oscillation
+        </div>
+    </div>
+
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setClearColor(0x000000, 0);
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 5, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+
+        // Create 3D model (cube with interesting geometry)
+        const geometry = new THREE.BoxGeometry(2, 2, 2);
+        const material = new THREE.MeshPhongMaterial({ 
+            color: 0x6496ff,
+            shininess: 100,
+            specular: 0x222222
+        });
+        
+        const cube = new THREE.Mesh(geometry, material);
+        cube.castShadow = true;
+        cube.receiveShadow = true;
+        scene.add(cube);
+
+        // Add some decorative elements
+        const wireframeGeometry = new THREE.BoxGeometry(2.1, 2.1, 2.1);
+        const wireframeMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const wireframeCube = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
+        scene.add(wireframeCube);
+
+        // Position camera
+        camera.position.z = 8;
+        camera.position.y = 2;
+        camera.lookAt(0, 0, 0);
+
+        // Animation variables
+        let time = 0;
+        const moveSpeed = 0.02;
+        const waveAmplitude = 3;
+        const waveFrequency = 2;
+
+        // RGB control variables
+        let currentR = 100;
+        let currentG = 150;
+        let currentB = 255;
+
+        // Setup RGB controls
+        function setupControls() {
+            const redSlider = document.getElementById('red');
+            const greenSlider = document.getElementById('green');
+            const blueSlider = document.getElementById('blue');
+            
+            const redValue = document.getElementById('red-value');
+            const greenValue = document.getElementById('green-value');
+            const blueValue = document.getElementById('blue-value');
+
+            function updateColor() {
+                currentR = parseInt(redSlider.value);
+                currentG = parseInt(greenSlider.value);
+                currentB = parseInt(blueSlider.value);
+                
+                redValue.textContent = currentR;
+                greenValue.textContent = currentG;
+                blueValue.textContent = currentB;
+
+                // Update material color
+                const color = new THREE.Color(`rgb(${currentR}, ${currentG}, ${currentB})`);
+                material.color = color;
+                
+                // Update wireframe color with a lighter version
+                const wireframeColor = new THREE.Color(`rgb(${Math.min(255, currentR + 50)}, ${Math.min(255, currentG + 50)}, ${Math.min(255, currentB + 50)})`);
+                wireframeMaterial.color = wireframeColor;
+            }
+
+            redSlider.addEventListener('input', updateColor);
+            greenSlider.addEventListener('input', updateColor);
+            blueSlider.addEventListener('input', updateColor);
+
+            // Initial color update
+            updateColor();
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.016; // Approximately 60fps
+            
+            // Right to left movement with wave motion
+            const xPosition = Math.cos(time * moveSpeed) * 6; // Right to left oscillation
+            const yPosition = Math.sin(time * waveFrequency) * waveAmplitude; // Up and down wave
+            
+            cube.position.x = xPosition;
+            cube.position.y = yPosition;
+            wireframeCube.position.x = xPosition;
+            wireframeCube.position.y = yPosition;
+            
+            // Rotation for visual interest
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.015;
+            cube.rotation.z += 0.005;
+            
+            wireframeCube.rotation.x += 0.008;
+            wireframeCube.rotation.y += 0.012;
+            wireframeCube.rotation.z += 0.003;
+            
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        function handleResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        // Initialize
+        setupControls();
+        animate();
+    </script>
+</body>
+</html>

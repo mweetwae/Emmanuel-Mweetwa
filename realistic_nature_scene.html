@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Nature Scene</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid #4a4a6a;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: linear-gradient(to bottom, #87CEEB, #98D8E8);
+        }
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>Nature Scene Controls</h3>
+        <button onclick="timeOfDay = 'dawn'; drawScene()">Dawn</button>
+        <button onclick="timeOfDay = 'day'; drawScene()">Day</button>
+        <button onclick="timeOfDay = 'sunset'; drawScene()">Sunset</button>
+        <button onclick="timeOfDay = 'night'; drawScene()">Night</button>
+        <button onclick="addRain()">Toggle Rain</button>
+    </div>
+    
+    <canvas id="natureCanvas" width="1000" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('natureCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let timeOfDay = 'day';
+        let raindrops = [];
+        let rainActive = false;
+        let animationFrame;
+
+        // Color schemes for different times of day
+        const colorSchemes = {
+            dawn: {
+                sky: ['#FF6B6B', '#FFE66D', '#87CEEB'],
+                mountain: '#8B4A6B',
+                tree: '#2D5016',
+                water: '#4682B4',
+                sun: '#FFD700'
+            },
+            day: {
+                sky: ['#87CEEB', '#98D8E8', '#B0E0E6'],
+                mountain: '#708090',
+                tree: '#228B22',
+                water: '#4169E1',
+                sun: '#FFD700'
+            },
+            sunset: {
+                sky: ['#FF4500', '#FF6347', '#FFB347'],
+                mountain: '#8B4A6B',
+                tree: '#2F4F2F',
+                water: '#FF6347',
+                sun: '#FF4500'
+            },
+            night: {
+                sky: ['#191970', '#000080', '#1e1e3f'],
+                mountain: '#2F2F2F',
+                tree: '#0F2F0F',
+                water: '#191970',
+                sun: '#F0F8FF'
+            }
+        };
+
+        function drawGradientSky() {
+            const colors = colorSchemes[timeOfDay].sky;
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.6);
+            
+            gradient.addColorStop(0, colors[0]);
+            gradient.addColorStop(0.5, colors[1]);
+            gradient.addColorStop(1, colors[2]);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
+        }
+
+        function drawSun() {
+            const colors = colorSchemes[timeOfDay];
+            const sunSize = timeOfDay === 'night' ? 25 : 40;
+            const sunX = timeOfDay === 'sunset' ? canvas.width * 0.2 : canvas.width * 0.8;
+            const sunY = timeOfDay === 'night' ? canvas.height * 0.15 : canvas.height * 0.2;
+
+            // Sun glow
+            const glowGradient = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunSize * 2);
+            glowGradient.addColorStop(0, colors.sun + '80');
+            glowGradient.addColorStop(1, colors.sun + '00');
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, sunSize * 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sun
+            ctx.fillStyle = colors.sun;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, sunSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawMountains() {
+            const colors = colorSchemes[timeOfDay];
+            
+            // Background mountains
+            ctx.fillStyle = colors.mountain + '80';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height * 0.4);
+            ctx.lineTo(canvas.width * 0.3, canvas.height * 0.25);
+            ctx.lineTo(canvas.width * 0.6, canvas.height * 0.35);
+            ctx.lineTo(canvas.width, canvas.height * 0.3);
+            ctx.lineTo(canvas.width, canvas.height * 0.6);
+            ctx.lineTo(0, canvas.height * 0.6);
+            ctx.closePath();
+            ctx.fill();
+
+            // Foreground mountains
+            ctx.fillStyle = colors.mountain;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height * 0.5);
+            ctx.lineTo(canvas.width * 0.2, canvas.height * 0.35);
+            ctx.lineTo(canvas.width * 0.4, canvas.height * 0.45);
+            ctx.lineTo(canvas.width * 0.7, canvas.height * 0.3);
+            ctx.lineTo(canvas.width, canvas.height * 0.4);
+            ctx.lineTo(canvas.width, canvas.height * 0.6);
+            ctx.lineTo(0, canvas.height * 0.6);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawWater() {
+            const colors = colorSchemes[timeOfDay];
+            const waterGradient = ctx.createLinearGradient(0, canvas.height * 0.6, 0, canvas.height);
+            waterGradient.addColorStop(0, colors.water + 'CC');
+            waterGradient.addColorStop(1, colors.water);
+            
+            ctx.fillStyle = waterGradient;
+            ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+
+            // Water ripples
+            ctx.strokeStyle = colors.water + '40';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                for (let x = 0; x < canvas.width; x += 20) {
+                    const y = canvas.height * 0.65 + i * 20 + Math.sin((x + Date.now() * 0.001) * 0.02) * 5;
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        function drawTree(x, y, size, angle = 0) {
+            const colors = colorSchemes[timeOfDay];
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle * Math.PI / 180);
+            
+            // Trunk
+            ctx.fillStyle = '#8B4513';
+            const trunkWidth = size * 0.1;
+            const trunkHeight = size * 0.4;
+            ctx.fillRect(-trunkWidth/2, 0, trunkWidth, trunkHeight);
+            
+            // Main foliage
+            ctx.fillStyle = colors.tree;
+            ctx.beginPath();
+            ctx.ellipse(0, -size * 0.1, size * 0.4, size * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Additional foliage layers for depth
+            ctx.fillStyle = colors.tree + 'DD';
+            ctx.beginPath();
+            ctx.ellipse(-size * 0.15, -size * 0.2, size * 0.25, size * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.ellipse(size * 0.1, -size * 0.15, size * 0.3, size * 0.35, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        function drawForest() {
+            // Background trees (smaller, faded)
+            for (let i = 0; i < 15; i++) {
+                const x = (canvas.width / 15) * i + Math.random() * 50;
+                const y = canvas.height * 0.55 + Math.random() * 20;
+                const size = 30 + Math.random() * 20;
+                drawTree(x, y, size, (Math.random() - 0.5) * 10);
+            }
+            
+            // Foreground trees (larger, more detailed)
+            const foregroundPositions = [
+                {x: canvas.width * 0.1, size: 80},
+                {x: canvas.width * 0.25, size: 70},
+                {x: canvas.width * 0.4, size: 90},
+                {x: canvas.width * 0.65, size: 75},
+                {x: canvas.width * 0.8, size: 85},
+                {x: canvas.width * 0.95, size: 65}
+            ];
+            
+            foregroundPositions.forEach(pos => {
+                drawTree(pos.x, canvas.height * 0.6, pos.size, (Math.random() - 0.5) * 5);
+            });
+        }
+
+        function drawClouds() {
+            if (timeOfDay === 'night') return;
+            
+            ctx.fillStyle = timeOfDay === 'sunset' ? '#FFB6C1' : '#FFFFFF';
+            
+            // Cloud function
+            function cloud(x, y, size) {
+                ctx.save();
+                ctx.globalAlpha = 0.8;
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const radius = size * (0.5 + Math.random() * 0.3);
+                    const cloudX = x + Math.cos(angle) * size * 0.3;
+                    const cloudY = y + Math.sin(angle) * size * 0.2;
+                    ctx.arc(cloudX, cloudY, radius, 0, Math.PI * 2);
+                }
+                ctx.fill();
+                ctx.restore();
+            }
+            
+            cloud(canvas.width * 0.2, canvas.height * 0.15, 40);
+            cloud(canvas.width * 0.6, canvas.height * 0.12, 35);
+            cloud(canvas.width * 0.8, canvas.height * 0.18, 30);
+        }
+
+        function initRain() {
+            raindrops = [];
+            for (let i = 0; i < 100; i++) {
+                raindrops.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    speed: 3 + Math.random() * 4,
+                    length: 10 + Math.random() * 20
+                });
+            }
+        }
+
+        function drawRain() {
+            if (!rainActive) return;
+            
+            ctx.strokeStyle = 'rgba(200, 200, 255, 0.6)';
+            ctx.lineWidth = 1;
+            
+            raindrops.forEach(drop => {
+                ctx.beginPath();
+                ctx.moveTo(drop.x, drop.y);
+                ctx.lineTo(drop.x - 2, drop.y + drop.length);
+                ctx.stroke();
+                
+                drop.y += drop.speed;
+                if (drop.y > canvas.height) {
+                    drop.y = -drop.length;
+                    drop.x = Math.random() * canvas.width;
+                }
+            });
+        }
+
+        function addRain() {
+            rainActive = !rainActive;
+            if (rainActive && raindrops.length === 0) {
+                initRain();
+            }
+        }
+
+        function drawScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawGradientSky();
+            drawSun();
+            drawClouds();
+            drawMountains();
+            drawWater();
+            drawForest();
+            drawRain();
+        }
+
+        function animate() {
+            drawScene();
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        // Initial draw
+        drawScene();
+        animate();
+
+        // Add some interactivity
+        canvas.addEventListener('click', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            if (y > canvas.height * 0.6) {
+                // Clicked on water - create ripple effect
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 3;
+                let radius = 0;
+                const ripple = setInterval(() => {
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    radius += 5;
+                    if (radius > 50) clearInterval(ripple);
+                }, 50);
+            }
+        });
+    </script>
+</body>
+</html>

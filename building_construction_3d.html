@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Building Under Construction</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #87CEEB, #E0F6FF);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+        
+        #controls button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        #controls button:hover {
+            background: #45a049;
+        }
+        
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls">
+            <h3 style="margin-top: 0;">Building Construction View</h3>
+            <button onclick="toggleView()">Toggle X-Ray View</button>
+            <button onclick="toggleFloors()">Show/Hide Floors</button>
+            <button onclick="toggleConstruction()">Show/Hide Construction</button>
+            <button onclick="resetCamera()">Reset Camera</button>
+        </div>
+        
+        <div id="info">
+            <div>🏗️ Use mouse to rotate and zoom</div>
+            <div>📐 Multi-story office building with internal layout</div>
+            <div>🔧 Toggle views to see construction details</div>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, building, constructionElements = [];
+        let isXRayMode = false;
+        let showFloors = true;
+        let showConstruction = true;
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+        let isMouseDown = false;
+        let cameraDistance = 15;
+
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(10, 8, 10);
+            camera.lookAt(0, 0, 0);
+            
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('container').appendChild(renderer.domElement);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            createBuilding();
+            setupControls();
+            animate();
+        }
+        
+        function createBuilding() {
+            building = new THREE.Group();
+            
+            // Foundation
+            const foundationGeometry = new THREE.BoxGeometry(8, 0.5, 6);
+            const foundationMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
+            const foundation = new THREE.Mesh(foundationGeometry, foundationMaterial);
+            foundation.position.y = -0.25;
+            foundation.receiveShadow = true;
+            building.add(foundation);
+            
+            // Main structure frame (steel beams)
+            createStructuralFrame();
+            
+            // Floors
+            createFloors();
+            
+            // External walls (partially complete)
+            createExternalWalls();
+            
+            // Internal rooms and layout
+            createInternalLayout();
+            
+            // Construction elements
+            createConstructionElements();
+            
+            scene.add(building);
+        }
+        
+        function createStructuralFrame() {
+            const beamMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            
+            // Vertical columns
+            for (let x = -3; x <= 3; x += 3) {
+                for (let z = -2; z <= 2; z += 2) {
+                    const columnGeometry = new THREE.BoxGeometry(0.2, 8, 0.2);
+                    const column = new THREE.Mesh(columnGeometry, beamMaterial);
+                    column.position.set(x, 4, z);
+                    column.castShadow = true;
+                    building.add(column);
+                }
+            }
+            
+            // Horizontal beams (floor structure)
+            for (let floor = 0; floor < 4; floor++) {
+                const y = floor * 2;
+                
+                // Longitudinal beams
+                for (let z = -2; z <= 2; z += 2) {
+                    const beamGeometry = new THREE.BoxGeometry(6, 0.15, 0.15);
+                    const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+                    beam.position.set(0, y, z);
+                    beam.castShadow = true;
+                    building.add(beam);
+                }
+                
+                // Cross beams
+                for (let x = -3; x <= 3; x += 3) {
+                    const beamGeometry = new THREE.BoxGeometry(0.15, 0.15, 4);
+                    const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+                    beam.position.set(x, y, 0);
+                    beam.castShadow = true;
+                    building.add(beam);
+                }
+            }
+        }
+        
+        function createFloors() {
+            const floorMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xCCCCCC,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            for (let floor = 0; floor < 4; floor++) {
+                const floorGeometry = new THREE.BoxGeometry(5.8, 0.1, 3.8);
+                const floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+                floorMesh.position.set(0, floor * 2, 0);
+                floorMesh.receiveShadow = true;
+                floorMesh.userData = { type: 'floor' };
+                building.add(floorMesh);
+            }
+        }
+        
+        function createExternalWalls() {
+            const wallMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xE6E6FA,
+                transparent: true,
+                opacity: 0.7
+            });
+            
+            // Front wall (partially built)
+            const frontWallGeometry = new THREE.BoxGeometry(6, 4, 0.1);
+            const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
+            frontWall.position.set(0, 2, 2);
+            frontWall.castShadow = true;
+            building.add(frontWall);
+            
+            // Side walls (in progress)
+            const sideWallGeometry = new THREE.BoxGeometry(0.1, 6, 4);
+            const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+            leftWall.position.set(-3, 3, 0);
+            leftWall.castShadow = true;
+            building.add(leftWall);
+            
+            // Back wall (under construction - only ground floor)
+            const backWallGeometry = new THREE.BoxGeometry(6, 2, 0.1);
+            const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+            backWall.position.set(0, 1, -2);
+            backWall.castShadow = true;
+            building.add(backWall);
+        }
+        
+        function createInternalLayout() {
+            const interiorWallMaterial = new THREE.MeshLambertMaterial({ color: 0xF0F0F0 });
+            
+            // Office partitions on different floors
+            for (let floor = 0; floor < 3; floor++) {
+                const y = floor * 2 + 1;
+                
+                // Central corridor wall
+                const corridorWallGeometry = new THREE.BoxGeometry(0.1, 1.8, 3);
+                const corridorWall = new THREE.Mesh(corridorWallGeometry, interiorWallMaterial);
+                corridorWall.position.set(1, y, 0);
+                corridorWall.userData = { type: 'interior' };
+                building.add(corridorWall);
+                
+                // Office dividers
+                const dividerGeometry = new THREE.BoxGeometry(2, 1.8, 0.1);
+                const divider1 = new THREE.Mesh(dividerGeometry, interiorWallMaterial);
+                divider1.position.set(-1.5, y, 1);
+                divider1.userData = { type: 'interior' };
+                building.add(divider1);
+                
+                const divider2 = new THREE.Mesh(dividerGeometry, interiorWallMaterial);
+                divider2.position.set(-1.5, y, -1);
+                divider2.userData = { type: 'interior' };
+                building.add(divider2);
+            }
+            
+            // Staircase
+            const stairMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            for (let step = 0; step < 10; step++) {
+                const stepGeometry = new THREE.BoxGeometry(0.8, 0.1, 0.3);
+                const stepMesh = new THREE.Mesh(stepGeometry, stairMaterial);
+                stepMesh.position.set(2.5, step * 0.2, 1.5 - step * 0.15);
+                stepMesh.userData = { type: 'interior' };
+                building.add(stepMesh);
+            }
+            
+            // Basic furniture/fixtures
+            createBasicFurniture();
+        }
+        
+        function createBasicFurniture() {
+            const furnitureMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            
+            // Desks on ground floor
+            for (let i = 0; i < 3; i++) {
+                const deskGeometry = new THREE.BoxGeometry(1.2, 0.05, 0.6);
+                const desk = new THREE.Mesh(deskGeometry, furnitureMaterial);
+                desk.position.set(-2 + i * 1.2, 0.4, 0.5);
+                desk.userData = { type: 'furniture' };
+                building.add(desk);
+                
+                // Desk legs
+                for (let legX = -0.5; legX <= 0.5; legX += 1) {
+                    for (let legZ = -0.25; legZ <= 0.25; legZ += 0.5) {
+                        const legGeometry = new THREE.BoxGeometry(0.05, 0.75, 0.05);
+                        const leg = new THREE.Mesh(legGeometry, furnitureMaterial);
+                        leg.position.set(-2 + i * 1.2 + legX, 0.375, 0.5 + legZ);
+                        leg.userData = { type: 'furniture' };
+                        building.add(leg);
+                    }
+                }
+            }
+        }
+        
+        function createConstructionElements() {
+            // Scaffolding
+            const scaffoldMaterial = new THREE.MeshLambertMaterial({ color: 0xFF6600 });
+            
+            for (let height = 0; height < 8; height += 2) {
+                // Vertical scaffolding poles
+                const poleGeometry = new THREE.BoxGeometry(0.1, 2, 0.1);
+                const pole1 = new THREE.Mesh(poleGeometry, scaffoldMaterial);
+                pole1.position.set(4, height + 1, 2.5);
+                constructionElements.push(pole1);
+                building.add(pole1);
+                
+                const pole2 = new THREE.Mesh(poleGeometry, scaffoldMaterial);
+                pole2.position.set(4, height + 1, -2.5);
+                constructionElements.push(pole2);
+                building.add(pole2);
+                
+                // Horizontal scaffolding
+                const horizontalGeometry = new THREE.BoxGeometry(0.1, 0.1, 5);
+                const horizontal = new THREE.Mesh(horizontalGeometry, scaffoldMaterial);
+                horizontal.position.set(4, height + 0.5, 0);
+                constructionElements.push(horizontal);
+                building.add(horizontal);
+            }
+            
+            // Construction crane (simplified)
+            const craneMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFF00 });
+            
+            // Crane mast
+            const mastGeometry = new THREE.BoxGeometry(0.3, 12, 0.3);
+            const mast = new THREE.Mesh(mastGeometry, craneMaterial);
+            mast.position.set(6, 6, -4);
+            constructionElements.push(mast);
+            building.add(mast);
+            
+            // Crane arm
+            const armGeometry = new THREE.BoxGeometry(8, 0.2, 0.2);
+            const arm = new THREE.Mesh(armGeometry, craneMaterial);
+            arm.position.set(2, 11, -4);
+            constructionElements.push(arm);
+            building.add(arm);
+            
+            // Material stacks
+            const materialMaterial = new THREE.MeshLambertMaterial({ color: 0xA0522D });
+            
+            for (let i = 0; i < 5; i++) {
+                const materialGeometry = new THREE.BoxGeometry(1, 0.2, 0.5);
+                const material = new THREE.Mesh(materialGeometry, materialMaterial);
+                material.position.set(-5, i * 0.2 + 0.1, 3);
+                constructionElements.push(material);
+                building.add(material);
+            }
+            
+            // Construction vehicles (simplified)
+            createConstructionVehicles();
+        }
+        
+        function createConstructionVehicles() {
+            const vehicleMaterial = new THREE.MeshLambertMaterial({ color: 0xFFA500 });
+            
+            // Excavator body
+            const excavatorGeometry = new THREE.BoxGeometry(2, 1, 1.5);
+            const excavator = new THREE.Mesh(excavatorGeometry, vehicleMaterial);
+            excavator.position.set(-6, 0.5, -3);
+            constructionElements.push(excavator);
+            building.add(excavator);
+            
+            // Excavator arm
+            const armGeometry = new THREE.BoxGeometry(0.3, 0.3, 2);
+            const excavatorArm = new THREE.Mesh(armGeometry, vehicleMaterial);
+            excavatorArm.position.set(-5, 1.2, -3);
+            excavatorArm.rotation.z = -0.5;
+            constructionElements.push(excavatorArm);
+            building.add(excavatorArm);
+        }
+        
+        function setupControls() {
+            const container = document.getElementById('container');
+            
+            container.addEventListener('mousedown', onMouseDown, false);
+            container.addEventListener('mousemove', onMouseMove, false);
+            container.addEventListener('mouseup', onMouseUp, false);
+            container.addEventListener('wheel', onWheel, false);
+            
+            window.addEventListener('resize', onWindowResize, false);
+        }
+        
+        function onMouseDown(event) {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+        
+        function onMouseMove(event) {
+            if (!isMouseDown) return;
+            
+            const deltaX = event.clientX - mouseX;
+            const deltaY = event.clientY - mouseY;
+            
+            targetRotationY += deltaX * 0.01;
+            targetRotationX += deltaY * 0.01;
+            
+            targetRotationX = Math.max(-Math.PI/2, Math.min(Math.PI/2, targetRotationX));
+            
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+        
+        function onMouseUp() {
+            isMouseDown = false;
+        }
+        
+        function onWheel(event) {
+            cameraDistance += event.deltaY * 0.01;
+            cameraDistance = Math.max(5, Math.min(30, cameraDistance));
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function toggleView() {
+            isXRayMode = !isXRayMode;
+            
+            building.traverse((child) => {
+                if (child.isMesh && child.userData.type !== 'furniture') {
+                    if (isXRayMode) {
+                        child.material.transparent = true;
+                        child.material.opacity = 0.3;
+                        child.material.wireframe = true;
+                    } else {
+                        child.material.transparent = false;
+                        child.material.opacity = 1;
+                        child.material.wireframe = false;
+                        
+                        // Reset specific transparencies
+                        if (child.userData.type === 'floor') {
+                            child.material.transparent = true;
+                            child.material.opacity = 0.8;
+                        }
+                    }
+                }
+            });
+        }
+        
+        function toggleFloors() {
+            showFloors = !showFloors;
+            
+            building.traverse((child) => {
+                if (child.isMesh && child.userData.type === 'floor') {
+                    child.visible = showFloors;
+                }
+            });
+        }
+        
+        function toggleConstruction() {
+            showConstruction = !showConstruction;
+            
+            constructionElements.forEach((element) => {
+                element.visible = showConstruction;
+            });
+        }
+        
+        function resetCamera() {
+            targetRotationX = 0;
+            targetRotationY = 0;
+            cameraDistance = 15;
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Smooth camera rotation
+            building.rotation.y += (targetRotationY - building.rotation.y) * 0.05;
+            building.rotation.x += (targetRotationX - building.rotation.x) * 0.05;
+            
+            // Update camera position based on distance
+            const radius = cameraDistance;
+            camera.position.x = radius * Math.cos(Date.now() * 0.0005);
+            camera.position.z = radius * Math.sin(Date.now() * 0.0005);
+            camera.position.y = 8;
+            camera.lookAt(0, 2, 0);
+            
+            // Animate construction crane
+            if (constructionElements.length > 0) {
+                const crane = constructionElements.find(el => el.geometry instanceof THREE.BoxGeometry && el.geometry.parameters.height === 12);
+                if (crane) {
+                    crane.rotation.y = Date.now() * 0.0003;
+                }
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Initialize the scene
+        init();
+    </script>
+</body>
+</html>

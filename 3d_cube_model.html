@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Cubic Model</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-group {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input[type="range"] {
+            width: 150px;
+        }
+        
+        button {
+            background: #2a5298;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 2px;
+        }
+        
+        button:hover {
+            background: #1e3c72;
+        }
+        
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls">
+            <div class="control-group">
+                <label for="size">Cube Size:</label>
+                <input type="range" id="size" min="1" max="5" value="2" step="0.1">
+                <span id="sizeValue">2.0</span>
+            </div>
+            
+            <div class="control-group">
+                <label for="rotationSpeed">Rotation Speed:</label>
+                <input type="range" id="rotationSpeed" min="0" max="0.05" value="0.01" step="0.001">
+                <span id="speedValue">0.01</span>
+            </div>
+            
+            <div class="control-group">
+                <button id="toggleWireframe">Toggle Wireframe</button>
+                <button id="toggleRotation">Pause Rotation</button>
+            </div>
+            
+            <div class="control-group">
+                <button id="colorRed">Red</button>
+                <button id="colorBlue">Blue</button>
+                <button id="colorGreen">Green</button>
+                <button id="colorRandom">Random</button>
+            </div>
+        </div>
+        
+        <div id="info">
+            <strong>3D Cube Model</strong><br>
+            • Mouse: Rotate camera<br>
+            • Wheel: Zoom in/out<br>
+            • Controls: Adjust properties
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000011);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // Create cube geometry and material
+        let cubeGeometry = new THREE.BoxGeometry(2, 2, 2);
+        const cubeMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x00ff88,
+            shininess: 100,
+            specular: 0x222222
+        });
+        
+        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        cube.castShadow = true;
+        scene.add(cube);
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+
+        const pointLight = new THREE.PointLight(0xff4444, 0.5, 50);
+        pointLight.position.set(-10, 10, -10);
+        scene.add(pointLight);
+
+        // Add ground plane for shadows
+        const groundGeometry = new THREE.PlaneGeometry(20, 20);
+        const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -3;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Camera position
+        camera.position.set(5, 5, 5);
+        camera.lookAt(0, 0, 0);
+
+        // Mouse controls for camera
+        let mouseDown = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        let cameraAngleX = 0;
+        let cameraAngleY = 0;
+        const cameraDistance = 8;
+
+        document.addEventListener('mousedown', (e) => {
+            mouseDown = true;
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        document.addEventListener('mouseup', () => {
+            mouseDown = false;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!mouseDown) return;
+            
+            const deltaX = e.clientX - mouseX;
+            const deltaY = e.clientY - mouseY;
+            
+            cameraAngleY -= deltaX * 0.01;
+            cameraAngleX -= deltaY * 0.01;
+            cameraAngleX = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraAngleX));
+            
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        // Zoom with mouse wheel
+        document.addEventListener('wheel', (e) => {
+            const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+            camera.position.multiplyScalar(zoomFactor);
+        });
+
+        // Control variables
+        let rotationSpeed = 0.01;
+        let isRotating = true;
+        let isWireframe = false;
+
+        // Control event listeners
+        document.getElementById('size').addEventListener('input', (e) => {
+            const size = parseFloat(e.target.value);
+            document.getElementById('sizeValue').textContent = size.toFixed(1);
+            
+            scene.remove(cube);
+            cubeGeometry = new THREE.BoxGeometry(size, size, size);
+            const newCube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            newCube.castShadow = true;
+            newCube.rotation.copy(cube.rotation);
+            Object.assign(cube, newCube);
+            scene.add(cube);
+        });
+
+        document.getElementById('rotationSpeed').addEventListener('input', (e) => {
+            rotationSpeed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = rotationSpeed.toFixed(3);
+        });
+
+        document.getElementById('toggleWireframe').addEventListener('click', () => {
+            isWireframe = !isWireframe;
+            cubeMaterial.wireframe = isWireframe;
+        });
+
+        document.getElementById('toggleRotation').addEventListener('click', (e) => {
+            isRotating = !isRotating;
+            e.target.textContent = isRotating ? 'Pause Rotation' : 'Resume Rotation';
+        });
+
+        // Color controls
+        document.getElementById('colorRed').addEventListener('click', () => {
+            cubeMaterial.color.setHex(0xff4444);
+        });
+
+        document.getElementById('colorBlue').addEventListener('click', () => {
+            cubeMaterial.color.setHex(0x4444ff);
+        });
+
+        document.getElementById('colorGreen').addEventListener('click', () => {
+            cubeMaterial.color.setHex(0x44ff44);
+        });
+
+        document.getElementById('colorRandom').addEventListener('click', () => {
+            cubeMaterial.color.setHex(Math.random() * 0xffffff);
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update camera position based on angles
+            camera.position.x = Math.cos(cameraAngleY) * Math.cos(cameraAngleX) * cameraDistance;
+            camera.position.y = Math.sin(cameraAngleX) * cameraDistance;
+            camera.position.z = Math.sin(cameraAngleY) * Math.cos(cameraAngleX) * cameraDistance;
+            camera.lookAt(0, 0, 0);
+
+            // Rotate cube
+            if (isRotating) {
+                cube.rotation.x += rotationSpeed;
+                cube.rotation.y += rotationSpeed * 0.7;
+                cube.rotation.z += rotationSpeed * 0.3;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
