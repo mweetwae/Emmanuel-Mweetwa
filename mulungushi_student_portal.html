@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mulungushi University - Student Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(111, 66, 193, 0.3);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #6f42c1;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .welcome-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(111, 66, 193, 0.1);
+        }
+
+        .welcome-title {
+            color: #6f42c1;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .academic-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(111, 66, 193, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(111, 66, 193, 0.2);
+        }
+
+        .card-title {
+            color: #6f42c1;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+        }
+
+        .grade-item, .assignment-item, .announcement-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .grade-item:last-child, .assignment-item:last-child, .announcement-item:last-child {
+            border-bottom: none;
+        }
+
+        .grade-score {
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .grade-a { background: #10b981; }
+        .grade-b { background: #f59e0b; }
+        .grade-c { background: #ef4444; }
+
+        .due-date {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .urgent {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(111, 66, 193, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #6f42c1;
+            color: #6f42c1;
+        }
+
+        .btn-outline:hover {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6f42c1 0%, #8b5cf6 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            background: white;
+            border: 2px solid #6f42c1;
+            color: #6f42c1;
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            background: #6f42c1;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .schedule-item {
+            background: linear-gradient(135deg, rgba(111, 66, 193, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-left: 4px solid #6f42c1;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 0.75rem;
+        }
+
+        .schedule-time {
+            font-weight: 600;
+            color: #6f42c1;
+            font-size: 0.9rem;
+        }
+
+        .schedule-subject {
+            font-weight: 500;
+            margin: 0.25rem 0;
+        }
+
+        .schedule-location {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .notification {
+            background: linear-gradient(135deg, rgba(111, 66, 193, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border: 1px solid rgba(111, 66, 193, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: #6f42c1;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-date {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header-content {
+                padding: 0 1rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .academic-info {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">MU</div>
+                <div>
+                    <h1>Mulungushi University</h1>
+                    <p style="opacity: 0.9; font-size: 0.9rem;">Student Portal</p>
+                </div>
+            </div>
+            <div class="user-info">
+                <div>
+                    <p style="font-weight: 600;">John Mwanza</p>
+                    <p style="opacity: 0.8; font-size: 0.85rem;">Computer Science</p>
+                </div>
+                <div class="user-avatar">JM</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h2 class="welcome-title">Welcome back, John!</h2>
+            <p style="color: #6b7280; margin-bottom: 1rem;">Here's your academic overview for this semester</p>
+            
+            <div class="academic-info">
+                <div class="info-card">
+                    <div class="info-label">Current Semester</div>
+                    <div class="info-value">Semester 2, 2025</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Student ID</div>
+                    <div class="info-value">MU2023001234</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Year of Study</div>
+                    <div class="info-value">3rd Year</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Overall GPA</div>
+                    <div class="info-value">3.67</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-icon">📚</span>
+                    Recent Grades
+                </h3>
+                <div class="grade-item">
+                    <div>
+                        <div style="font-weight: 500;">Database Systems</div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">COMP 301</div>
+                    </div>
+                    <span class="grade-score grade-a">A</span>
+                </div>
+                <div class="grade-item">
+                    <div>
+                        <div style="font-weight: 500;">Software Engineering</div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">COMP 302</div>
+                    </div>
+                    <span class="grade-score grade-b">B+</span>
+                </div>
+                <div class="grade-item">
+                    <div>
+                        <div style="font-weight: 500;">Computer Networks</div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">COMP 303</div>
+                    </div>
+                    <span class="grade-score grade-a">A-</span>
+                </div>
+                <a href="#" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View All Grades</a>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-icon">📝</span>
+                    Upcoming Assignments
+                </h3>
+                <div class="assignment-item">
+                    <div>
+                        <div style="font-weight: 500;">Web Development Project</div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">COMP 304</div>
+                    </div>
+                    <span class="due-date urgent">Due Tomorrow</span>
+                </div>
+                <div class="assignment-item">
+                    <div>
+                        <div style="font-weight: 500;">Data Structures Assignment</div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">COMP 205</div>
+                    </div>
+                    <span class="due-date">Due Sep 5</span>
+                </div>
+                <div class="assignment-item">
+                    <div>
+                        <div style="font-weight: 500;">Research Paper</div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">COMP 401</div>
+                    </div>
+                    <span class="due-date">Due Sep 12</span>
+                </div>
+                <a href="#" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View All Assignments</a>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-icon">📅</span>
+                    Today's Schedule
+                </h3>
+                <div class="schedule-item">
+                    <div class="schedule-time">09:00 - 11:00</div>
+                    <div class="schedule-subject">Database Systems</div>
+                    <div class="schedule-location">Room B201, IT Building</div>
+                </div>
+                <div class="schedule-item">
+                    <div class="schedule-time">14:00 - 16:00</div>
+                    <div class="schedule-subject">Software Engineering Lab</div>
+                    <div class="schedule-location">Lab 3, IT Building</div>
+                </div>
+                <a href="#" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View Full Timetable</a>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-icon">📢</span>
+                    Announcements
+                </h3>
+                <div class="notification">
+                    <div class="notification-title">Examination Timetable Released</div>
+                    <p style="margin: 0.5rem 0; font-size: 0.9rem;">The final examination timetable for Semester 2 has been published.</p>
+                    <div class="notification-date">2 days ago</div>
+                </div>
+                <div class="notification">
+                    <div class="notification-title">Library Extended Hours</div>
+                    <p style="margin: 0.5rem 0; font-size: 0.9rem;">The library will be open 24/7 during the examination period.</p>
+                    <div class="notification-date">1 week ago</div>
+                </div>
+                <a href="#" class="btn btn-outline" style="margin-top: 1rem; width: 100%;">View All Announcements</a>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-icon">💰</span>
+                    Financial Status
+                </h3>
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Semester Fees Paid</span>
+                        <span style="font-weight: 600; color: #6f42c1;">75%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%;"></div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem;">
+                        K3,750 of K5,000 paid
+                    </div>
+                </div>
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem;">
+                    <div style="color: #ef4444; font-weight: 500; font-size: 0.9rem;">Outstanding Balance: K1,250</div>
+                    <div style="color: #6b7280; font-size: 0.8rem;">Due: September 15, 2025</div>
+                </div>
+                <a href="#" class="btn" style="width: 100%;">Make Payment</a>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-icon">📖</span>
+                    Course Progress
+                </h3>
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-weight: 500; margin-bottom: 0.5rem;">Database Systems</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%;"></div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #6b7280;">85% Complete</div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-weight: 500; margin-bottom: 0.5rem;">Software Engineering</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 70%;"></div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #6b7280;">70% Complete</div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-weight: 500; margin-bottom: 0.5rem;">Computer Networks</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 60%;"></div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #6b7280;">60% Complete</div>
+                </div>
+                <a href="#" class="btn btn-outline" style="width: 100%;">View Course Details</a>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h3 class="card-title">
+                <span class="card-icon">⚡</span>
+                Quick Actions
+            </h3>
+            <div class="quick-actions">
+                <a href="#" class="action-btn">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📋</div>
+                    <div>Course Registration</div>
+                </a>
+                <a href="#" class="action-btn">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📚</div>
+                    <div>Library Services</div>
+                </a>
+                <a href="#" class="action-btn">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎓</div>
+                    <div>Academic Records</div>
+                </a>
+                <a href="#" class="action-btn">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💬</div>
+                    <div>Student Support</div>
+                </a>
+                <a href="#" class="action-btn">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
+                    <div>Transcript Request</div>
+                </a>
+                <a href="#" class="action-btn">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🏠</div>
+                    <div>Accommodation</div>
+                </a>
+                <a href="#" class="action-btn">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚙️</div>
+                    <div>Settings</div>
+                </a>
+                <a href="#" class="action-btn">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🚪</div>
+                    <div>Logout</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive functionality
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+                
+                // Add a subtle pulse animation on click
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-4px)';
+                }, 100);
+            });
+        });
+
+        // Simulate real-time updates for progress bars
+        function animateProgressBars() {
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const width = parseInt(bar.style.width);
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width + '%';
+                }, 100);
+            });
+        }
+
+        // Animate progress bars on page load
+        setTimeout(animateProgressBars, 500);
+
+        // Add hover effects for buttons
+        document.querySelectorAll('.btn, .action-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Simulate new notification
+        function addNotification() {
+            const announcementsCard = document.querySelector('.card:last-of-type');
+            if (announcementsCard && announcementsCard.querySelector('.notification')) {
+                const newNotification = document.createElement('div');
+                newNotification.className = 'notification';
+                newNotification.innerHTML = `
+                    <div class="notification-title">New: Academic Calendar Updated</div>
+                    <p style="margin: 0.5rem 0; font-size: 0.9rem;">Important dates for the upcoming semester have been revised.</p>
+                    <div class="notification-date">Just now</div>
+                `;
+                newNotification.style.background = 'linear-gradient(135deg, rgba(111, 66, 193, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)';
+                newNotification.style.border = '2px solid rgba(111, 66, 193, 0.3)';
+                
+                const firstNotification = announcementsCard.querySelector('.notification');
+                firstNotification.parentNode.insertBefore(newNotification, firstNotification);
+                
+                // Remove the notification after 5 seconds
+                setTimeout(() => {
+                    newNotification.style.opacity = '0';
+                    newNotification.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        newNotification.remove();
+                    }, 300);
+                }, 5000);
+            }
+        }
+
+        // Add a new notification after 3 seconds
+        setTimeout(addNotification, 3000);
+    </script>
+</body>
+</html>
